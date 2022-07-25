@@ -1,0 +1,7 @@
+.idea
+/dist
+/target
+CHANGELOG.md
+*.iml
+*.ipr
+*.iws

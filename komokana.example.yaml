@@ -1,0 +1,25 @@
+- exe: "firefox.exe" # when a window with this exe is active
+  target_layer: "firefox" # switch to this layer, a vim-like layer just for browsing!
+  title_overrides: # unless...
+    - title: "Slack |" # the window title matches this
+      # valid matching strategies are: starts_with, ends_with, contains and equals
+      strategy: "starts_with" # matching with this matching strategy
+      target_layer: "qwerty" # if it does, then switch to this layer for chatting
+    - title: "Mozilla Firefox" # new firefox tab, we'll probably want to switch to qwerty mode to type a url!
+      strategy: "equals"
+      target_layer: "qwerty"
+  virtual_key_overrides: # unless...
+    # list of key codes and their decimal values here: https://cherrytree.at/misc/vk.htm
+    - virtual_key_code: 18 # this key is held down (alt in this case) when the window becomes active
+      targer_layer: "qwerty" # if it is, then switch to this layer, so that we can continue switching window focus with alt+hjkl
+  virtual_key_ignores: # alternatively
+    - 18 # if this key is held down (alt in this case), then don't make any layer switches
+
+# your normal layer might have a tap-hold on j since it's a such convenient and ergonomic key
+# but it sucks to be in vim, holding down j to move down and have nothing happen because of the hold...
+# no worries! let's just switch to a layer which removes the tap-hold on the j when we are in windows
+# where we use vim or vim editing extensions!
+- exe: "WindowsTerminal.exe"
+  target_layer: "editor"
+- exe: "idea64.exe"
+  target_layer: "editor"
