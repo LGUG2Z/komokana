@@ -49,7 +49,16 @@ PowerShell prompt), and then move the binaries to that directory.
 
 ### Scoop
 
-`komokana` is not yet available to install via [Scoop](https://scoop.sh).
+If you use the [Scoop](https://scoop.sh/) command line installer, you can run
+the following commands to install the binaries from the latest GitHub Release:
+
+```powershell
+scoop bucket add extras
+scoop install komokana
+```
+
+If you install _komokana_ using Scoop, the binary will automatically be added
+to your `Path`.
 
 ### Building from Source
 
