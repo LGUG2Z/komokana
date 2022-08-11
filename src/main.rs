@@ -194,7 +194,7 @@ impl Komokana {
         let config = self.configuration.clone();
         let default_layer = self.default_layer.clone();
         std::thread::spawn(move || -> Result<()> {
-            let mut buf = vec![0; 4096];
+            let mut buf = vec![0; 8192];
 
             loop {
                 let mut named_pipe = pipe.lock();
