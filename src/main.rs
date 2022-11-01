@@ -1,7 +1,6 @@
 #![warn(clippy::all, clippy::nursery, clippy::pedantic)]
 #![allow(clippy::missing_errors_doc)]
 
-use clap::AppSettings;
 use clap::Parser;
 use std::io::Read;
 use std::io::Write;
@@ -34,7 +33,7 @@ const PIPE: &str = r#"\\.\pipe\"#;
 const NAME: &str = "komokana";
 
 #[derive(Debug, Parser)]
-#[clap(author, about, version, setting = AppSettings::DeriveDisplayOrder, arg_required_else_help = true)]
+#[clap(author, about, version, arg_required_else_help = true)]
 struct Cli {
     /// The port on which kanata's TCP server is running
     #[clap(short = 'p', long)]
