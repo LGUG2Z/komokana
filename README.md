@@ -31,8 +31,8 @@ indefinitely. However, `komokana` will not launch successfully if either one of 
 
 - The latest version of `komorebi`
   - `scoop install komorebi` (from the `extras` bucket)
-- The latest version of `kanata` compiled from source (until v1.0.6 is released)
-  - `cargo install --git https://github.com/jtroo/kanata`
+- The latest version of `kanata`
+  - `cargo install kanata`
 
 ### GitHub Releases
 
