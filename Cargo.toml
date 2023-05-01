@@ -13,7 +13,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4", features = ["derive", "wrap_help"] }
 color-eyre = "0.6"
-dirs = "4"
+dirs = "5"
 env_logger = "0.10"
 json_dotpath = "1"
 log = "0.4"
