@@ -25,7 +25,8 @@ once_cell = "1"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 miow = "0.5"
+windows = { version = "0.52", features = ["Win32_UI_Input_KeyboardAndMouse"], optional = true }
 
-[dependencies.windows]
-version = "0.52"
-features = ["Win32_UI_Input_KeyboardAndMouse"]
+[features]
+#[cfg(target_os = "windows")]
+virtual_keys = [ "dep:windows" ]
