@@ -14,7 +14,7 @@ edition = "2021"
 clap = { version = "4", features = ["derive", "wrap_help"] }
 color-eyre = "0.6"
 dirs = "5"
-env_logger = "0.10"
+env_logger = "0.11"
 json_dotpath = "1"
 log = "0.4"
 parking_lot = "0.12"
