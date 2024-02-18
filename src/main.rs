@@ -18,9 +18,12 @@ use color_eyre::eyre::anyhow;
 use color_eyre::Report;
 use color_eyre::Result;
 use json_dotpath::DotPaths;
+use komorebi_client::Notification;
+use komorebi_client::NotificationEvent;
+use komorebi_client::UnixListener;
+use komorebi_client::WindowManagerEvent;
 use parking_lot::Mutex;
 use serde_json::json;
-use uds_windows::UnixListener;
 use windows::Win32::UI::Input::KeyboardAndMouse::GetKeyState;
 
 use crate::configuration::Configuration;
@@ -94,39 +97,7 @@ impl Komokana {
         let configuration: Configuration =
             serde_yaml::from_str(&std::fs::read_to_string(configuration)?)?;
 
-        let data_dir = dirs::data_local_dir().unwrap();
-        let socket = data_dir.join("komorebi").join(NAME);
-
-        match std::fs::remove_file(&socket) {
-            Ok(()) => {}
-            Err(error) => match error.kind() {
-                // Doing this because ::exists() doesn't work reliably on Windows via IntelliJ
-                std::io::ErrorKind::NotFound => {}
-                _ => {
-                    return Err(error.into());
-                }
-            },
-        };
-
-        let listener = UnixListener::bind(&socket)?;
-
-        let mut output = Command::new("cmd.exe")
-            .args(["/C", "komorebic.exe", "subscribe-socket", NAME])
-            .output()?;
-
-        while !output.status.success() {
-            log::warn!(
-                "komorebic.exe failed with error code {:?}, retrying in 5 seconds...",
-                output.status.code()
-            );
-
-            std::thread::sleep(Duration::from_secs(5));
-
-            output = Command::new("cmd.exe")
-                .args(["/C", "komorebic.exe", "subscribe-socket", NAME])
-                .output()?;
-        }
-
+        let listener = komorebi_client::subscribe(NAME)?;
         log::debug!("connected to komorebi");
 
         let stream = TcpStream::connect(format!("localhost:{kanata_port}"))?;
@@ -212,8 +183,7 @@ impl Komokana {
                         let reader = BufReader::new(subscription.try_clone()?);
                         #[allow(clippy::lines_filter_map_ok)]
                         for line in reader.lines().flatten() {
-                            let notification: serde_json::Value = match serde_json::from_str(&line)
-                            {
+                            let notification: Notification = match serde_json::from_str(&line) {
                                 Ok(value) => value,
                                 Err(error) => {
                                     log::debug!(
@@ -223,41 +193,32 @@ impl Komokana {
                                 }
                             };
 
-                            if notification.dot_has("event.content.1.exe") {
-                                if let (Some(exe), Some(title), Some(kind)) = (
-                                    notification.dot_get::<String>("event.content.1.exe")?,
-                                    notification.dot_get::<String>("event.content.1.title")?,
-                                    notification.dot_get::<String>("event.type")?,
-                                ) {
-                                    log::debug!("processing komorebi notifcation: {kind}");
-                                    if KANATA_DISCONNECTED.load(Ordering::SeqCst) {
-                                        log::info!("kanata is currently disconnected, will not try to send this ChangeLayer request");
-                                        continue;
-                                    }
-
-                                    match kind.as_str() {
-                                        "Show" => handle_event(
-                                            &config,
-                                            &mut stream,
-                                            &default_layer,
-                                            Event::Show,
-                                            &exe,
-                                            &title,
-                                            kanata_port,
-                                        )?,
-                                        "FocusChange" => handle_event(
-                                            &config,
-                                            &mut stream,
-                                            &default_layer,
-                                            Event::FocusChange,
-                                            &exe,
-                                            &title,
-                                            kanata_port,
-                                        )?,
-                                        _ => {}
-                                    };
-                                }
-                            }
+                            match notification.event {
+                                NotificationEvent::WindowManager(WindowManagerEvent::Show(
+                                    _,
+                                    window,
+                                )) => handle_event(
+                                    &config,
+                                    &mut stream,
+                                    &default_layer,
+                                    Event::Show,
+                                    &window.exe()?,
+                                    &window.title()?,
+                                    kanata_port,
+                                )?,
+                                NotificationEvent::WindowManager(
+                                    WindowManagerEvent::FocusChange(_, window),
+                                ) => handle_event(
+                                    &config,
+                                    &mut stream,
+                                    &default_layer,
+                                    Event::FocusChange,
+                                    &window.exe()?,
+                                    &window.title()?,
+                                    kanata_port,
+                                )?,
+                                _ => {}
+                            };
                         }
                     }
                     Err(error) => {
