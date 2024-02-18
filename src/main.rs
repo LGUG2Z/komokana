@@ -2,6 +2,8 @@
 #![allow(clippy::missing_errors_doc)]
 
 use clap::Parser;
+use std::io::BufRead;
+use std::io::BufReader;
 use std::io::Read;
 use std::io::Write;
 use std::net::TcpStream;
@@ -16,9 +18,9 @@ use color_eyre::eyre::anyhow;
 use color_eyre::Report;
 use color_eyre::Result;
 use json_dotpath::DotPaths;
-use miow::pipe::NamedPipe;
 use parking_lot::Mutex;
 use serde_json::json;
+use uds_windows::UnixListener;
 use windows::Win32::UI::Input::KeyboardAndMouse::GetKeyState;
 
 use crate::configuration::Configuration;
@@ -29,8 +31,7 @@ mod configuration;
 static KANATA_DISCONNECTED: AtomicBool = AtomicBool::new(false);
 static KANATA_RECONNECT_REQUIRED: AtomicBool = AtomicBool::new(false);
 
-const PIPE: &str = r#"\\.\pipe\"#;
-const NAME: &str = "komokana";
+const NAME: &str = "komokana.sock";
 
 #[derive(Debug, Parser)]
 #[clap(author, about, version, arg_required_else_help = true)]
@@ -75,7 +76,7 @@ fn main() -> Result<()> {
 }
 
 struct Komokana {
-    komorebi: Arc<Mutex<NamedPipe>>,
+    komorebi: Arc<Mutex<UnixListener>>,
     kanata: Arc<Mutex<TcpStream>>,
     kanata_port: i32,
     configuration: Configuration,
@@ -90,15 +91,27 @@ impl Komokana {
         default_layer: String,
         tmpfile: bool,
     ) -> Result<Self> {
-        let pipe = format!("{}\\{}", PIPE, NAME);
-
         let configuration: Configuration =
             serde_yaml::from_str(&std::fs::read_to_string(configuration)?)?;
 
-        let named_pipe = NamedPipe::new(pipe)?;
+        let data_dir = dirs::data_local_dir().unwrap();
+        let socket = data_dir.join("komorebi").join(NAME);
+
+        match std::fs::remove_file(&socket) {
+            Ok(()) => {}
+            Err(error) => match error.kind() {
+                // Doing this because ::exists() doesn't work reliably on Windows via IntelliJ
+                std::io::ErrorKind::NotFound => {}
+                _ => {
+                    return Err(error.into());
+                }
+            },
+        };
+
+        let listener = UnixListener::bind(&socket)?;
 
         let mut output = Command::new("cmd.exe")
-            .args(["/C", "komorebic.exe", "subscribe", NAME])
+            .args(["/C", "komorebic.exe", "subscribe-socket", NAME])
             .output()?;
 
         while !output.status.success() {
@@ -110,18 +123,17 @@ impl Komokana {
             std::thread::sleep(Duration::from_secs(5));
 
             output = Command::new("cmd.exe")
-                .args(["/C", "komorebic.exe", "subscribe", NAME])
+                .args(["/C", "komorebic.exe", "subscribe-socket", NAME])
                 .output()?;
         }
 
-        named_pipe.connect()?;
         log::debug!("connected to komorebi");
 
         let stream = TcpStream::connect(format!("localhost:{kanata_port}"))?;
         log::debug!("connected to kanata");
 
         Ok(Self {
-            komorebi: Arc::new(Mutex::new(named_pipe)),
+            komorebi: Arc::new(Mutex::new(listener)),
             kanata: Arc::new(Mutex::new(stream)),
             kanata_port,
             configuration,
@@ -132,7 +144,7 @@ impl Komokana {
 
     #[allow(clippy::too_many_lines)]
     pub fn listen(&mut self) {
-        let pipe = self.komorebi.clone();
+        let socket = self.komorebi.clone();
         let mut stream = self.kanata.clone();
         let stream_read = self.kanata.clone();
         let kanata_port = self.kanata_port;
@@ -193,58 +205,58 @@ impl Komokana {
         let config = self.configuration.clone();
         let default_layer = self.default_layer.clone();
         std::thread::spawn(move || -> Result<()> {
-            let mut buf = vec![0; 8192];
-
-            loop {
-                let mut named_pipe = pipe.lock();
-                match (*named_pipe).read(&mut buf) {
-                    Ok(bytes_read) => {
-                        let data = String::from_utf8(buf[0..bytes_read].to_vec())?;
-                        if data == "\n" {
-                            continue;
-                        }
-
-                        let notification: serde_json::Value = match serde_json::from_str(&data) {
-                            Ok(value) => value,
-                            Err(error) => {
-                                log::debug!("discarding malformed komorebi notification: {error}");
-                                continue;
-                            }
-                        };
-
-                        if notification.dot_has("event.content.1.exe") {
-                            if let (Some(exe), Some(title), Some(kind)) = (
-                                notification.dot_get::<String>("event.content.1.exe")?,
-                                notification.dot_get::<String>("event.content.1.title")?,
-                                notification.dot_get::<String>("event.type")?,
-                            ) {
-                                log::debug!("processing komorebi notifcation: {kind}");
-                                if KANATA_DISCONNECTED.load(Ordering::SeqCst) {
-                                    log::info!("kanata is currently disconnected, will not try to send this ChangeLayer request");
+            #[allow(clippy::significant_drop_in_scrutinee)]
+            for client in socket.lock().incoming() {
+                match client {
+                    Ok(subscription) => {
+                        let reader = BufReader::new(subscription.try_clone()?);
+                        #[allow(clippy::lines_filter_map_ok)]
+                        for line in reader.lines().flatten() {
+                            let notification: serde_json::Value = match serde_json::from_str(&line)
+                            {
+                                Ok(value) => value,
+                                Err(error) => {
+                                    log::debug!(
+                                        "discarding malformed komorebi notification: {error}"
+                                    );
                                     continue;
                                 }
+                            };
 
-                                match kind.as_str() {
-                                    "Show" => handle_event(
-                                        &config,
-                                        &mut stream,
-                                        &default_layer,
-                                        Event::Show,
-                                        &exe,
-                                        &title,
-                                        kanata_port,
-                                    )?,
-                                    "FocusChange" => handle_event(
-                                        &config,
-                                        &mut stream,
-                                        &default_layer,
-                                        Event::FocusChange,
-                                        &exe,
-                                        &title,
-                                        kanata_port,
-                                    )?,
-                                    _ => {}
-                                };
+                            if notification.dot_has("event.content.1.exe") {
+                                if let (Some(exe), Some(title), Some(kind)) = (
+                                    notification.dot_get::<String>("event.content.1.exe")?,
+                                    notification.dot_get::<String>("event.content.1.title")?,
+                                    notification.dot_get::<String>("event.type")?,
+                                ) {
+                                    log::debug!("processing komorebi notifcation: {kind}");
+                                    if KANATA_DISCONNECTED.load(Ordering::SeqCst) {
+                                        log::info!("kanata is currently disconnected, will not try to send this ChangeLayer request");
+                                        continue;
+                                    }
+
+                                    match kind.as_str() {
+                                        "Show" => handle_event(
+                                            &config,
+                                            &mut stream,
+                                            &default_layer,
+                                            Event::Show,
+                                            &exe,
+                                            &title,
+                                            kanata_port,
+                                        )?,
+                                        "FocusChange" => handle_event(
+                                            &config,
+                                            &mut stream,
+                                            &default_layer,
+                                            Event::FocusChange,
+                                            &exe,
+                                            &title,
+                                            kanata_port,
+                                        )?,
+                                        _ => {}
+                                    };
+                                }
                             }
                         }
                     }
@@ -252,10 +264,9 @@ impl Komokana {
                         // Broken pipe
                         if error.raw_os_error().expect("could not get raw os error") == 109 {
                             log::warn!("komorebi is no longer running");
-                            named_pipe.disconnect()?;
 
                             let mut output = Command::new("cmd.exe")
-                                .args(["/C", "komorebic.exe", "subscribe", NAME])
+                                .args(["/C", "komorebic.exe", "subscribe-socket", NAME])
                                 .output()?;
 
                             while !output.status.success() {
@@ -267,18 +278,19 @@ impl Komokana {
                                 std::thread::sleep(Duration::from_secs(5));
 
                                 output = Command::new("cmd.exe")
-                                    .args(["/C", "komorebic.exe", "subscribe", NAME])
+                                    .args(["/C", "komorebic.exe", "subscribe-socket", NAME])
                                     .output()?;
                             }
 
                             log::warn!("reconnected to komorebi");
-                            named_pipe.connect()?;
                         } else {
                             return Err(Report::from(error));
                         }
                     }
                 }
             }
+
+            Ok(())
         });
     }
 }
@@ -317,14 +329,13 @@ fn handle_event(
             KANATA_RECONNECT_REQUIRED.store(false, Ordering::SeqCst);
         }
 
-        let mut stream = stream.lock();
         let request = json!({
             "ChangeLayer": {
                 "new": target,
             }
         });
 
-        stream.write_all(request.to_string().as_bytes())?;
+        stream.lock().write_all(request.to_string().as_bytes())?;
         log::debug!("request sent: {request}");
     };
 
