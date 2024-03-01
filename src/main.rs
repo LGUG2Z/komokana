@@ -17,17 +17,17 @@ use kanata::Kanata;
 #[cfg(target_os = "windows")]
 mod windows;
 #[cfg(target_os = "windows")]
-pub use windows::Komokana;
+use windows::Komokana;
 
 #[cfg(target_os = "macos")]
 mod osx;
 #[cfg(target_os = "macos")]
-pub use osx::Komokana;
+use osx::Komokana;
 
 #[cfg(target_os = "linux")]
 mod linux;
 #[cfg(target_os = "linux")]
-pub use linux::Komokana;
+use linux::Komokana;
 
 static DEFAULT_LAYER: OnceCell<String> = OnceCell::new();
 static CONFIG: OnceCell<Configuration> = OnceCell::new();
@@ -45,8 +45,6 @@ pub trait Provider {
         Self: Sized;
     fn listen(self);
     fn resolve_config_path(config: &str) -> Result<PathBuf>;
-    #[cfg(feature = "virtual_keys")]
-    fn get_key_state(key_code: i32) -> i16;
 }
 
 #[derive(Debug, Parser)]
