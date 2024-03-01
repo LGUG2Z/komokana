@@ -13,9 +13,6 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
 
-#[cfg(feature = "virtual_keys")]
-use windows::Win32::UI::Input::KeyboardAndMouse::GetKeyState;
-
 use crate::events::{handle_event, Event};
 use crate::Provider;
 
@@ -98,9 +95,9 @@ impl Provider for Komokana {
                                 }
 
                                 match kind.as_str() {
-                                    "Show" => handle_event(Event::Show, &exe, Some(&title))?,
+                                    "Show" => handle_event(Event::Show, &exe, &title)?,
                                     "FocusChange" => {
-                                        handle_event(Event::FocusChange, &exe, Some(&title))?
+                                        handle_event(Event::FocusChange, &exe, &title)?
                                     }
                                     _ => {}
                                 };
@@ -122,11 +119,6 @@ impl Provider for Komokana {
                 }
             }
         });
-    }
-
-    #[cfg(feature = "virtual_keys")]
-    fn get_key_state(key_code: i32) -> i16 {
-        unsafe { GetKeyState(key_code) }
     }
 
     fn resolve_config_path(raw_path: &str) -> Result<PathBuf> {
