@@ -1,6 +1,6 @@
 [package]
 name = "komokana"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Jade Iqbal <jadeiqbal@fastmail.com>"]
 description = "A daemon that switches kanata keyboard layers in response to komorebi events"
 categories = ["cli", "tiling-window-manager", "windows", "keyboard"]
