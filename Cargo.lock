@@ -324,7 +324,6 @@ dependencies = [
  "json_dotpath",
  "log",
  "miow",
- "once_cell",
  "parking_lot",
  "serde",
  "serde_json",
