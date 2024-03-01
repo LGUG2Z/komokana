@@ -51,8 +51,7 @@ fn calculate_target(
     let configuration = CONFIG.get().unwrap();
     let mut new_layer = default;
     for entry in configuration {
-        let entry_strategy = entry.strategy.clone().unwrap_or(Strategy::Equals);
-        if matches_with_strategy(exe, &entry.exe, &entry_strategy) {
+        if entry.exe == exe {
             if matches!(event, Event::FocusChange) {
                 new_layer = Option::from(entry.target_layer.as_str());
             }

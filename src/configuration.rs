@@ -9,7 +9,6 @@ pub type Configuration = Vec<Entry>;
 pub struct Entry {
     pub exe: String,
     pub target_layer: String,
-    pub strategy: Option<Strategy>,
     pub title_overrides: Option<Vec<TitleOverride>>,
     pub virtual_key_overrides: Option<Vec<VirtualKeyOverride>>,
     pub virtual_key_ignores: Option<Vec<i32>>,
