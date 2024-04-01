@@ -24,5 +24,5 @@ serde_yaml = "0.9"
 komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "4cc1212d6005443c9563a9576ac394b2ebb61f45"}
 
 [dependencies.windows]
-version = "0.52"
+version = "0.54"
 features = ["Win32_UI_Input_KeyboardAndMouse"]
