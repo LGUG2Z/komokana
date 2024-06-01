@@ -21,7 +21,7 @@ parking_lot = "0.12"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
-komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.25"}
+komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.26"}
 
 [dependencies.windows]
 version = "0.56"
