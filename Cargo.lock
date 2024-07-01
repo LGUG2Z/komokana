@@ -389,12 +389,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "fixedbitset"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
-
-[[package]]
 name = "fsevent-sys"
 version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -524,6 +518,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -561,8 +564,8 @@ dependencies = [
 
 [[package]]
 name = "komorebi"
-version = "0.1.25"
-source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.25#62900c59cbb236394f84241937a3fd73f6748538"
+version = "0.1.27"
+source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.27#a511cbd26366699de788c941df773413667c0334"
 dependencies = [
  "bitflags 2.5.0",
  "clap",
@@ -594,6 +597,7 @@ dependencies = [
  "uds_windows",
  "which",
  "widestring",
+ "win32-display-data",
  "windows 0.54.0",
  "windows-implement 0.53.0",
  "windows-interface 0.53.0",
@@ -603,8 +607,8 @@ dependencies = [
 
 [[package]]
 name = "komorebi-client"
-version = "0.1.25"
-source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.25#62900c59cbb236394f84241937a3fd73f6748538"
+version = "0.1.27"
+source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.27#a511cbd26366699de788c941df773413667c0334"
 dependencies = [
  "komorebi",
  "komorebi-core",
@@ -614,8 +618,8 @@ dependencies = [
 
 [[package]]
 name = "komorebi-core"
-version = "0.1.25"
-source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.25#62900c59cbb236394f84241937a3fd73f6748538"
+version = "0.1.27"
+source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.27#a511cbd26366699de788c941df773413667c0334"
 dependencies = [
  "clap",
  "color-eyre",
@@ -896,13 +900,10 @@ version = "0.9.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e401f977ab385c9e4e3ab30627d6f26d00e2c73eef317493c4ec6d468726cf8"
 dependencies = [
- "backtrace",
  "cfg-if 1.0.0",
  "libc",
- "petgraph",
  "redox_syscall 0.5.1",
  "smallvec",
- "thread-id",
  "windows-targets 0.52.5",
 ]
 
@@ -911,16 +912,6 @@ name = "paste"
 version = "1.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
-
-[[package]]
-name = "petgraph"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1d3afd2628e69da2be385eb6f2fd57c8ac7977ceeff6dc166ff1657b0e386a9"
-dependencies = [
- "fixedbitset",
- "indexmap",
-]
 
 [[package]]
 name = "pin-project-lite"
@@ -1219,9 +1210,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json_lenient"
-version = "0.1.8"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc61c66b53a4035fcce237ef38043f4b2f0ebf918fd0e69541a5166104065581"
+checksum = "a5d0bae483150302560d7cb52e7932f39b69a6fbdd099e48d33ef060a8c9c078"
 dependencies = [
  "itoa",
  "ryu",
@@ -1361,16 +1352,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.60",
-]
-
-[[package]]
-name = "thread-id"
-version = "4.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0ec81c46e9eb50deaa257be2f148adf052d1fb7701cfd55ccfab2525280b70b"
-dependencies = [
- "libc",
- "winapi",
 ]
 
 [[package]]
@@ -1571,6 +1552,16 @@ name = "widestring"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7219d36b6eac893fa81e84ebe06485e7dcbb616177469b142df14f1f4deb1311"
+
+[[package]]
+name = "win32-display-data"
+version = "0.1.0"
+source = "git+https://github.com/LGUG2Z/win32-display-data?rev=2a0f7166da154880a1750b91829b1186d9c6a00c#2a0f7166da154880a1750b91829b1186d9c6a00c"
+dependencies = [
+ "itertools",
+ "thiserror",
+ "windows 0.54.0",
+]
 
 [[package]]
 name = "winapi"
