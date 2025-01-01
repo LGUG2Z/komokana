@@ -1,7 +1,6 @@
 [package]
 name = "komokana"
-version = "0.1.4"
-authors = ["Jade Iqbal <jadeiqbal@fastmail.com>"]
+version = "0.1.5"
 description = "A daemon that switches kanata keyboard layers in response to komorebi events"
 categories = ["cli", "tiling-window-manager", "windows", "keyboard"]
 repository = "https://github.com/LGUG2Z/komokana"
@@ -21,7 +20,7 @@ parking_lot = "0.12"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
-komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.29"}
+komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.32" }
 
 [dependencies.windows]
 version = "0.58"

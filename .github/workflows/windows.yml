@@ -1,5 +1,3 @@
-# Adapted from https://github.com/rust-lang/rustup/blob/master/.github/workflows/windows-builds-on-master.yaml
-
 name: Windows
 
 on:
@@ -14,100 +12,140 @@ on:
     tags:
       - v*
   schedule:
-    - cron: "30 0 * * 1" # Every Monday at half past midnight UTC
+    - cron: "30 0 * * 0" # Every day at 00:30 UTC
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build
-    runs-on: windows-latest
-    env:
-      RUSTFLAGS: -Ctarget-feature=+crt-static
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        target:
-          - x86_64-pc-windows-msvc
+        platform:
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os-name: Windows-aarch64
+            runs-on: windows-latest
+            target: aarch64-pc-windows-msvc
+    runs-on: ${{ matrix.platform.runs-on }}
+    permissions: write-all
+    env:
+      RUSTFLAGS: -Ctarget-feature=+crt-static -Dwarnings
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Prep cargo dirs
-        run: |
-          New-Item "${env:USERPROFILE}\.cargo\registry" -ItemType Directory -Force
-          New-Item "${env:USERPROFILE}\.cargo\git" -ItemType Directory -Force
-        shell: powershell
-      - name: Set environment variables appropriately for the build
-        run: |
-          echo "%USERPROFILE%\.cargo\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
-          echo "TARGET=${{ matrix.target }}" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
-          echo "SKIP_TESTS=" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
-      - name: Cache cargo registry, git trees and binaries
-        uses: actions/cache@v3
+      - run: rustup toolchain install stable --profile minimal
+      - run: rustup toolchain install nightly --allow-downgrade -c rustfmt
+      - uses: Swatinem/rust-cache@v2
         with:
+          cache-on-failure: "true"
+          cache-all-crates: "true"
+          key: ${{ matrix.platform.target }}
+      - run: cargo +nightly fmt --check
+      - run: cargo clippy
+      - uses: houseabsolute/actions-rust-cross@v0
+        with:
+          command: "build"
+          target: ${{ matrix.platform.target }}
+          args: "--locked --release"
+      - run: |
+          cargo install cargo-wix
+          cargo wix --no-build --nocapture --target ${{ matrix.platform.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: komokana-${{ matrix.platform.target }}-${{ github.sha }}
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            ~/.cargo/bin
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Get rustc commit hash
-        id: cargo-target-cache
-        run: |
-          echo "::set-output name=rust_hash::$(rustc -Vv | grep commit-hash | awk '{print $2}')"
-        shell: bash
-      - name: Cache cargo build
-        uses: actions/cache@v3
+            target/${{ matrix.platform.target }}/release/*.exe
+            target/${{ matrix.platform.target }}/release/*.pdb
+            target/wix/komokana-*.msi
+          retention-days: 14
+
+  release-dry-run:
+    needs: build
+    runs-on: windows-latest
+    permissions: write-all
+    if: ${{ github.ref == 'refs/heads/master' }}
+    steps:
+      - uses: actions/checkout@v4
         with:
-          path: target
-          key: ${{ github.base_ref }}-${{ github.head_ref }}-${{ matrix.target }}-cargo-target-dir-${{ steps.cargo-target-cache.outputs.rust_hash }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ github.base_ref }}-${{ matrix.target }}-cargo-target-dir-${{ steps.cargo-target-cache.outputs.rust_hash }}-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Rustup using win.rustup.rs
+          fetch-depth: 0
+      - shell: bash
         run: |
-          # Disable the download progress bar which can cause perf issues
-          $ProgressPreference = "SilentlyContinue"
-          Invoke-WebRequest https://win.rustup.rs/ -OutFile rustup-init.exe
-          .\rustup-init.exe -y --default-host=x86_64-pc-windows-msvc --profile=minimal
-        shell: powershell
-      - name: Ensure stable toolchain is up to date
-        run: rustup update stable
-        shell: bash
-      - name: Install the target
-        run: |
-          rustup target install ${{ matrix.target }}
-      - name: Run a full build
-        run: |
-          cargo build --locked --release --target ${{ matrix.target }}
-      - name: Upload the built artifacts
-        uses: actions/upload-artifact@v4
+          TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+      - uses: actions/download-artifact@v4
+      - shell: bash
+        run: ls -R
+      - run: |
+          Compress-Archive -Force ./komokana-x86_64-pc-windows-msvc-${{ github.sha }}/x86_64-pc-windows-msvc/release/*.exe komokana-$Env:VERSION-x86_64-pc-windows-msvc.zip
+          Copy-Item ./komokana-x86_64-pc-windows-msvc-${{ github.sha }}/wix/*x86_64.msi -Destination ./komokana-$Env:VERSION-x86_64.msi
+          echo "$((Get-FileHash komokana-$Env:VERSION-x86_64-pc-windows-msvc.zip).Hash.ToLower())  komokana-$Env:VERSION-x86_64-pc-windows-msvc.zip" >checksums.txt
+
+          Compress-Archive -Force ./komokana-aarch64-pc-windows-msvc-${{ github.sha }}/aarch64-pc-windows-msvc/release/*.exe komokana-$Env:VERSION-aarch64-pc-windows-msvc.zip
+          Copy-Item ./komokana-aarch64-pc-windows-msvc-${{ github.sha }}/wix/*aarch64.msi -Destination ./komokana-$Env:VERSION-aarch64.msi
+          echo "$((Get-FileHash komokana-$Env:VERSION-aarch64-pc-windows-msvc.zip).Hash.ToLower())  komokana-$Env:VERSION-aarch64-pc-windows-msvc.zip" >>checksums.txt
+      - uses: Swatinem/rust-cache@v2
         with:
-          name: komokana-${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/release/komokana.exe
-          retention-days: 7
-      - name: Generate changelog
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
+          cache-on-failure: "true"
+          cache-all-crates: "true"
+      - shell: bash
         run: |
           if ! type kokai >/dev/null; then cargo install --locked kokai --force; fi
-          kokai release --no-emoji --add-links github:commits,issues --ref "$(git tag --points-at HEAD)" >"CHANGELOG.md"
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
-        if: startsWith(github.ref, 'refs/tags/')
+          git tag -d nightly || true
+          kokai release --no-emoji --add-links github:commits,issues --ref "${{ github.ref_name }}" >"CHANGELOG.md"
+      - uses: softprops/action-gh-release@v2
         with:
-          version: latest
-          args: release --skip-validate --clean --release-notes=CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SCOOP_TOKEN: ${{ secrets.SCOOP_TOKEN }}
+          body_path: "CHANGELOG.md"
+          draft: true
+          files: |
+            checksums.txt
+            *.zip
+            *.msi
 
-  winget:
-    name: Publish to WinGet
-    runs-on: ubuntu-latest
+  release:
     needs: build
+    runs-on: windows-latest
+    permissions: write-all
     if: startsWith(github.ref, 'refs/tags/v')
-
+    env:
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: vedantmgoyal2009/winget-releaser@v2
+      - uses: actions/checkout@v4
         with:
-          identifier: LGUG2Z.komokana
-          installers-regex: '\.zip$'
-          token: ${{ secrets.WINGET_TOKEN }}
+          fetch-depth: 0
+      - shell: bash
+        run: |
+          TAG=${{ github.ref_name }}
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+      - uses: actions/download-artifact@v4
+      - run: |
+          Compress-Archive -Force ./komokana-x86_64-pc-windows-msvc-${{ github.sha }}/x86_64-pc-windows-msvc/release/*.exe komokana-$Env:VERSION-x86_64-pc-windows-msvc.zip
+          Copy-Item ./komokana-x86_64-pc-windows-msvc-${{ github.sha }}/wix/*x86_64.msi -Destination ./komokana-$Env:VERSION-x86_64.msi
+          echo "$((Get-FileHash komokana-$Env:VERSION-x86_64-pc-windows-msvc.zip).Hash.ToLower())  komokana-$Env:VERSION-x86_64-pc-windows-msvc.zip" >checksums.txt
+
+          Compress-Archive -Force ./komokana-aarch64-pc-windows-msvc-${{ github.sha }}/aarch64-pc-windows-msvc/release/*.exe komokana-$Env:VERSION-aarch64-pc-windows-msvc.zip
+          Copy-Item ./komokana-aarch64-pc-windows-msvc-${{ github.sha }}/wix/*aarch64.msi -Destination ./komokana-$Env:VERSION-aarch64.msi
+          echo "$((Get-FileHash komokana-$Env:VERSION-aarch64-pc-windows-msvc.zip).Hash.ToLower())  komokana-$Env:VERSION-aarch64-pc-windows-msvc.zip" >>checksums.txt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: "true"
+          cache-all-crates: "true"
+      - shell: bash
+        run: |
+          if ! type kokai >/dev/null; then cargo install --locked kokai --force; fi
+          git tag -d nightly || true
+          kokai release --no-emoji --add-links github:commits,issues --ref "$(git tag --points-at HEAD)" >"CHANGELOG.md"
+      # - uses: softprops/action-gh-release@v2
+      #   with:
+      #     body_path: "CHANGELOG.md"
+      #     files: |
+      #       checksums.txt
+      #       *.zip
+      #       *.msi
+      # - if: startsWith(github.ref, 'refs/tags/v')
+      #   uses: vedantmgoyal2009/winget-releaser@main
+      #   with:
+      #     identifier: LGUG2Z.komokana
+      #     token: ${{ secrets.WINGET_TOKEN }}

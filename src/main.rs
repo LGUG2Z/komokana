@@ -48,7 +48,7 @@ struct Cli {
     /// Layer to default to when an active window doesn't match any rules
     #[clap(short, long)]
     default_layer: String,
-    /// Write the current layer to ~/AppData/Local/Temp/kanata_layer
+    /// Write the current layer to `~/AppData/Local/Temp/kanata_layer`
     #[clap(short, long, action)]
     tmpfile: bool,
 }
@@ -64,7 +64,7 @@ fn main() -> Result<()> {
     color_eyre::install()?;
     env_logger::builder().format_timestamp(None).init();
 
-    let mut komokana = Komokana::init(
+    let komokana = Komokana::init(
         configuration,
         cli.kanata_port,
         cli.default_layer,
@@ -114,7 +114,7 @@ impl Komokana {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub fn listen(&mut self) {
+    pub fn listen(&self) {
         let socket = self.komorebi.clone();
         let mut stream = self.kanata.clone();
         let stream_read = self.kanata.clone();
