@@ -137,15 +137,15 @@ jobs:
           if ! type kokai >/dev/null; then cargo install --locked kokai --force; fi
           git tag -d nightly || true
           kokai release --no-emoji --add-links github:commits,issues --ref "$(git tag --points-at HEAD)" >"CHANGELOG.md"
-      # - uses: softprops/action-gh-release@v2
-      #   with:
-      #     body_path: "CHANGELOG.md"
-      #     files: |
-      #       checksums.txt
-      #       *.zip
-      #       *.msi
-      # - if: startsWith(github.ref, 'refs/tags/v')
-      #   uses: vedantmgoyal2009/winget-releaser@main
-      #   with:
-      #     identifier: LGUG2Z.komokana
-      #     token: ${{ secrets.WINGET_TOKEN }}
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: "CHANGELOG.md"
+          files: |
+            checksums.txt
+            *.zip
+            *.msi
+      - if: startsWith(github.ref, 'refs/tags/v')
+        uses: vedantmgoyal2009/winget-releaser@main
+        with:
+          identifier: LGUG2Z.komokana
+          token: ${{ secrets.WINGET_TOKEN }}
