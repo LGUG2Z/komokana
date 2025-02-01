@@ -2109,8 +2109,8 @@ dependencies = [
 
 [[package]]
 name = "komorebi"
-version = "0.1.32"
-source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.32#4b9d811499dbab34db7cca98359c9eb82a1a2d87"
+version = "0.1.33"
+source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.33#cc51f62c3a4a46244be9790c52d550c56d990e2d"
 dependencies = [
  "bitflags 2.6.0",
  "clap",
@@ -2155,8 +2155,8 @@ dependencies = [
 
 [[package]]
 name = "komorebi-client"
-version = "0.1.32"
-source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.32#4b9d811499dbab34db7cca98359c9eb82a1a2d87"
+version = "0.1.33"
+source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.33#cc51f62c3a4a46244be9790c52d550c56d990e2d"
 dependencies = [
  "komorebi",
  "serde_json_lenient",
@@ -2165,8 +2165,8 @@ dependencies = [
 
 [[package]]
 name = "komorebi-themes"
-version = "0.1.32"
-source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.32#4b9d811499dbab34db7cca98359c9eb82a1a2d87"
+version = "0.1.33"
+source = "git+https://github.com/LGUG2Z/komorebi?tag=v0.1.33#cc51f62c3a4a46244be9790c52d550c56d990e2d"
 dependencies = [
  "base16-egui-themes",
  "catppuccin-egui",
@@ -3402,9 +3402,9 @@ dependencies = [
 
 [[package]]
 name = "shadow-rs"
-version = "0.35.2"
+version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1b2328fb3ec0d5302f95915e7e77cfc2ff943714d9970bc4b66e9eacf318687"
+checksum = "974eb8222c62a8588bc0f02794dd1ba5b60b3ec88b58e050729d0907ed6af610"
 dependencies = [
  "const_format",
  "git2",
@@ -3591,9 +3591,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo"
-version = "0.31.4"
+version = "0.33.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "355dbe4f8799b304b05e1b0f05fc59b2a18d36645cf169607da45bde2f69a1be"
+checksum = "4fc858248ea01b66f19d8e8a6d55f41deaf91e9d495246fd01368d99935c6c01"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -4766,9 +4766,9 @@ dependencies = [
 
 [[package]]
 name = "winreg"
-version = "0.52.0"
+version = "0.53.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a277a57398d4bfa075df44f501a17cfdf8542d224f0d36095a2adc7aee4ef0a5"
+checksum = "89a47b489f8fc5b949477e89dca4d1617f162c6c53fbcbefde553ab17b342ff9"
 dependencies = [
  "cfg-if 1.0.0",
  "windows-sys 0.48.0",
