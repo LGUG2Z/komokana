@@ -2,6 +2,9 @@
 #![allow(clippy::missing_errors_doc)]
 
 use clap::Parser;
+use komorebi_client::SocketMessage;
+use komorebi_client::Window;
+use komorebi_client::WindowsApi;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::io::Read;
@@ -217,6 +220,25 @@ impl Komokana {
                                     &window.title()?,
                                     kanata_port,
                                 )?,
+                                NotificationEvent::Socket(
+                                    SocketMessage::CycleFocusWindow(_)
+                                    | SocketMessage::FocusStackWindow(_)
+                                    | SocketMessage::PromoteFocus
+                                    | SocketMessage::EagerFocus(_)
+                                    | SocketMessage::FocusWindow(_),
+                                ) => {
+                                    let window = Window::from(WindowsApi::foreground_window()?);
+
+                                    handle_event(
+                                        &config,
+                                        &mut stream,
+                                        &default_layer,
+                                        Event::FocusChange,
+                                        &window.exe()?,
+                                        &window.title()?,
+                                        kanata_port,
+                                    )?;
+                                }
                                 _ => {}
                             };
                         }

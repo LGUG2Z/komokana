@@ -2,7 +2,7 @@
 
 Automatic application-aware keyboard layer switching for Windows
 
-## About
+# About
 
 `komokana` is a daemon that listens to events emitted by [`komorebi`](https://github.com/LGUG2Z/komorebi) and communicates
 with [`kanata`](https://github.com/jtroo/kanata) to switch keyboard layers based on a set of user defined rules.
@@ -15,7 +15,7 @@ troubleshooting etc. If you have any specific feature requests or bugs to report
 
 Articles, blog posts, demos and videos about `komokana` can be added to this section of the readme by PR.
 
-## Description
+# Description
 
 `komokana` communicates with `komorebi`
 using [Named Pipes](https://docs.microsoft.com/en-us/windows/win32/ipc/named-pipes),
@@ -25,16 +25,16 @@ started by passing the `--port` flag when launching the `kanata` process.
 If either the `komorebi` or `kanata` processes are stopped or killed, `komokana` will attempt to reconnect to them
 indefinitely. However, `komokana` will not launch successfully if either one of those processes is not running.
 
-## Getting Started
+# Getting Started
 
-### Prerequisites
+## Prerequisites
 
 - The latest version of `komorebi`
   - `scoop install komorebi` (from the `extras` bucket)
 - The latest version of `kanata`
   - `cargo install kanata`
 
-### GitHub Releases
+## GitHub Releases
 
 Prebuilt binaries of tagged releases are available on the [releases page](https://github.com/LGUG2Z/komokana/releases)
 in a `zip` archive.
@@ -47,7 +47,7 @@ using [`setx`](https://docs.microsoft.com/en-us/windows-server/administration/wi
 Variables pop up in System Properties Advanced (which can be launched with `SystemPropertiesAdvanced.exe` at a
 PowerShell prompt), and then move the binaries to that directory.
 
-### Scoop
+## Scoop
 
 If you use the [Scoop](https://scoop.sh/) command line installer, you can run
 the following commands to install the binaries from the latest GitHub Release:
@@ -60,7 +60,7 @@ scoop install komokana
 If you install _komokana_ using Scoop, the binary will automatically be added
 to your `Path`.
 
-### Building from Source
+## Building from Source
 
 If you prefer to compile _komokana_ from source, you will need
 a [working Rust development environment on Windows 10](https://rustup.rs/). The `x86_64-pc-windows-msvc` toolchain is
@@ -73,7 +73,7 @@ You can then clone this repo and compile the source code to install the binary f
 cargo install --path . --locked
 ```
 
-### Configuring
+## Configuring
 
 `komokana` is configured using a YAML file that can be specified using the `-c` flag.
 
@@ -157,7 +157,7 @@ Based on the `kanata` layers defined above, we can have a `komokana.yaml` config
   target_layer: "editor"
 ```
 
-### Running
+## Running
 
 Once you have either the prebuilt binaries in your `Path`, or have compiled the binaries from source (these will already
 be in your `Path` if you installed Rust with [rustup](https://rustup.rs), which you absolutely should), you can
@@ -189,4 +189,59 @@ widgets:
         run_cmd: "cat '%LOCALAPPDATA%\\Temp\\kanata_layer'"
         run_interval: 300
         return_format: "string"
+```
+
+# Contribution Guidelines
+
+If you would like to contribute to `komokana` please take the time to carefully read the guidelines below.
+
+## Commit hygiene
+
+- Flatten all `use` statements
+- Run `cargo +stable clippy` and ensure that all lints and suggestions have been addressed before committing
+- Run `cargo +nightly fmt --all` to ensure consistent formatting before committing
+- Use `git cz` with
+  the [Commitizen CLI](https://github.com/commitizen/cz-cli#conventional-commit-messages-as-a-global-utility) to prepare
+  commit messages
+- Provide **at least** one short sentence or paragraph in your commit message body to describe your thought process for the
+  changes being committed
+
+## License
+
+`komokana` is licensed under the [Komorebi 1.0.0 license](./LICENSE.md), which
+is a fork of the [PolyForm Strict 1.0.0
+license](https://polyformproject.org/licenses/strict/1.0.0). On a high level
+this means that you are free to do whatever you want with `komokana` for
+personal use other than redistribution, or distribution of new works (i.e.
+hard-forks) based on the software.
+
+Anyone is free to make their own fork of `komokana` with changes intended
+either for personal use or for integration back upstream via pull requests.
+
+_The [Komorebi 1.0.0 License](./LICENSE.md) does not permit any kind of
+commercial use._
+
+### Contribution licensing
+
+Contributions are accepted with the following understanding:
+
+- Contributed content is licensed under the terms of the 0-BSD license
+- Contributors accept the terms of the project license at the time of contribution
+
+By making a contribution, you accept both the current project license terms, and that all contributions that you have
+made are provided under the terms of the 0-BSD license.
+
+#### Zero-Clause BSD
+
+```
+Permission to use, copy, modify, and/or distribute this software for
+any purpose with or without fee is hereby granted.
+
+THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL
+WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
+FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY
+DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ```
