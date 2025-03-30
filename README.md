@@ -208,7 +208,7 @@ If you would like to contribute to `komokana` please take the time to carefully 
 
 ## License
 
-`komokana` is licensed under the [Komorebi 1.0.0 license](./LICENSE.md), which
+`komokana` is licensed under the [Komorebi 2.0.0 license](./LICENSE.md), which
 is a fork of the [PolyForm Strict 1.0.0
 license](https://polyformproject.org/licenses/strict/1.0.0). On a high level
 this means that you are free to do whatever you want with `komokana` for
@@ -218,7 +218,7 @@ hard-forks) based on the software.
 Anyone is free to make their own fork of `komokana` with changes intended
 either for personal use or for integration back upstream via pull requests.
 
-_The [Komorebi 1.0.0 License](./LICENSE.md) does not permit any kind of
+_The [Komorebi 2.0.0 License](./LICENSE.md) does not permit any kind of
 commercial use._
 
 ### Contribution licensing
