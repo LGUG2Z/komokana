@@ -2161,7 +2161,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "windows 0.60.0",
+ "windows 0.61.1",
 ]
 
 [[package]]
