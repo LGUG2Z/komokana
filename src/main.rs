@@ -240,7 +240,7 @@ impl Komokana {
                                     )?;
                                 }
                                 _ => {}
-                            };
+                            }
                         }
                     }
                     Err(error) => {
@@ -320,7 +320,7 @@ fn handle_event(
 
         stream.lock().write_all(request.to_string().as_bytes())?;
         log::debug!("request sent: {request}");
-    };
+    }
 
     Ok(())
 }
@@ -423,7 +423,7 @@ fn resolve_windows_path(raw_path: &str) -> Result<PathBuf> {
 
     let file = full_path
         .components()
-        .last()
+        .next_back()
         .ok_or_else(|| anyhow!("cannot parse filename"))?;
 
     let mut canonicalized = std::fs::canonicalize(parent)?;
