@@ -2739,7 +2739,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml 0.9.34+deprecated",
- "windows 0.60.0",
+ "windows 0.62.2",
 ]
 
 [[package]]
