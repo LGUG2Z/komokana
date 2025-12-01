@@ -2745,7 +2745,7 @@ dependencies = [
 [[package]]
 name = "komorebi"
 version = "0.1.39"
-source = "git+https://github.com/LGUG2Z/komorebi#5c2767d5895c8acd0f8d6e9ef8d0071313601158"
+source = "git+https://github.com/LGUG2Z/komorebi#69086299e1abbf9bf5604ffd91bf755b0ca30f0f"
 dependencies = [
  "base64",
  "bitflags 2.10.0",
@@ -2795,7 +2795,7 @@ dependencies = [
 [[package]]
 name = "komorebi-client"
 version = "0.1.39"
-source = "git+https://github.com/LGUG2Z/komorebi#5c2767d5895c8acd0f8d6e9ef8d0071313601158"
+source = "git+https://github.com/LGUG2Z/komorebi#69086299e1abbf9bf5604ffd91bf755b0ca30f0f"
 dependencies = [
  "komorebi",
  "serde_json_lenient",
@@ -2805,7 +2805,7 @@ dependencies = [
 [[package]]
 name = "komorebi-themes"
 version = "0.1.39"
-source = "git+https://github.com/LGUG2Z/komorebi#5c2767d5895c8acd0f8d6e9ef8d0071313601158"
+source = "git+https://github.com/LGUG2Z/komorebi#69086299e1abbf9bf5604ffd91bf755b0ca30f0f"
 dependencies = [
  "base16-egui-themes",
  "catppuccin-egui",
