@@ -133,20 +133,41 @@ impl Komokana {
                 let mut buf = vec![0; 1024];
                 match read_stream.read(&mut buf) {
                     Ok(bytes_read) => {
-                        let data = String::from_utf8(buf[0..bytes_read].to_vec())?;
+                        let data = match String::from_utf8(buf[0..bytes_read].to_vec()) {
+                            Ok(s) => s,
+                            Err(error) => {
+                                log::error!("kanata sent invalid utf8: {error}");
+                                continue;
+                            }
+                        };
+
                         if data == "\n" {
                             continue;
                         }
 
-                        let notification: serde_json::Value = serde_json::from_str(&data)?;
+                        let notification: serde_json::Value = match serde_json::from_str(&data) {
+                            Ok(v) => v,
+                            Err(error) => {
+                                log::error!("kanata sent malformed json: {error}");
+                                continue;
+                            }
+                        };
 
                         if notification.dot_has("LayerChange.new") {
-                            if let Some(new) = notification.dot_get::<String>("LayerChange.new")? {
-                                log::info!("current layer: {new}");
-                                if tmpfile {
-                                    let mut tmp = std::env::temp_dir();
-                                    tmp.push("kanata_layer");
-                                    std::fs::write(tmp, new)?;
+                            match notification.dot_get::<String>("LayerChange.new") {
+                                Ok(Some(new)) => {
+                                    log::info!("current layer: {new}");
+                                    if tmpfile {
+                                        let mut tmp = std::env::temp_dir();
+                                        tmp.push("kanata_layer");
+                                        if let Err(error) = std::fs::write(tmp, new) {
+                                            log::error!("failed to write tmpfile: {error}");
+                                        }
+                                    }
+                                }
+                                Ok(None) => {}
+                                Err(error) => {
+                                    log::error!("failed to read LayerChange.new: {error}");
                                 }
                             }
                         }
@@ -196,30 +217,42 @@ impl Komokana {
                                 }
                             };
 
-                            match notification.event {
+                            let result = match notification.event {
                                 NotificationEvent::WindowManager(WindowManagerEvent::Show(
                                     _,
                                     window,
-                                )) => handle_event(
-                                    &config,
-                                    &mut stream,
-                                    &default_layer,
-                                    Event::Show,
-                                    &window.exe()?,
-                                    &window.title()?,
-                                    kanata_port,
-                                )?,
+                                )) => match (window.exe(), window.title()) {
+                                    (Ok(exe), Ok(title)) => handle_event(
+                                        &config,
+                                        &mut stream,
+                                        &default_layer,
+                                        Event::Show,
+                                        &exe,
+                                        &title,
+                                        kanata_port,
+                                    ),
+                                    (Err(error), _) | (_, Err(error)) => {
+                                        log::error!("failed to read window info: {error}");
+                                        continue;
+                                    }
+                                },
                                 NotificationEvent::WindowManager(
                                     WindowManagerEvent::FocusChange(_, window),
-                                ) => handle_event(
-                                    &config,
-                                    &mut stream,
-                                    &default_layer,
-                                    Event::FocusChange,
-                                    &window.exe()?,
-                                    &window.title()?,
-                                    kanata_port,
-                                )?,
+                                ) => match (window.exe(), window.title()) {
+                                    (Ok(exe), Ok(title)) => handle_event(
+                                        &config,
+                                        &mut stream,
+                                        &default_layer,
+                                        Event::FocusChange,
+                                        &exe,
+                                        &title,
+                                        kanata_port,
+                                    ),
+                                    (Err(error), _) | (_, Err(error)) => {
+                                        log::error!("failed to read window info: {error}");
+                                        continue;
+                                    }
+                                },
                                 NotificationEvent::Socket(
                                     SocketMessage::CycleFocusWindow(_)
                                     | SocketMessage::FocusStackWindow(_)
@@ -227,19 +260,47 @@ impl Komokana {
                                     | SocketMessage::EagerFocus(_)
                                     | SocketMessage::FocusWindow(_),
                                 ) => {
-                                    let window = Window::from(WindowsApi::foreground_window()?);
+                                    let hwnd = match WindowsApi::foreground_window() {
+                                        Ok(h) => h,
+                                        Err(error) => {
+                                            // os error 0 means GetForegroundWindow returned NULL
+                                            // with no error set — no window has focus right now,
+                                            // skip the event silently
+                                            if error
+                                                .downcast_ref::<std::io::Error>()
+                                                .and_then(std::io::Error::raw_os_error)
+                                                == Some(0)
+                                            {
+                                                continue;
+                                            }
+                                            log::error!("failed to get foreground window: {error}");
+                                            continue;
+                                        }
+                                    };
 
-                                    handle_event(
-                                        &config,
-                                        &mut stream,
-                                        &default_layer,
-                                        Event::FocusChange,
-                                        &window.exe()?,
-                                        &window.title()?,
-                                        kanata_port,
-                                    )?;
+                                    let window = Window::from(hwnd);
+
+                                    match (window.exe(), window.title()) {
+                                        (Ok(exe), Ok(title)) => handle_event(
+                                            &config,
+                                            &mut stream,
+                                            &default_layer,
+                                            Event::FocusChange,
+                                            &exe,
+                                            &title,
+                                            kanata_port,
+                                        ),
+                                        (Err(error), _) | (_, Err(error)) => {
+                                            log::error!("failed to read window info: {error}");
+                                            continue;
+                                        }
+                                    }
                                 }
-                                _ => {}
+                                _ => Ok(()),
+                            };
+
+                            if let Err(error) = result {
+                                log::error!("handle_event failed: {error}");
                             }
                         }
                     }
