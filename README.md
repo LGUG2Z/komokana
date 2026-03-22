@@ -11,7 +11,7 @@ with [`kanata`](https://github.com/jtroo/kanata) to switch keyboard layers based
 to that keyboard layer when the windows of those applications are focused in the foreground.
 
 You may join the `komorebi` [Discord server](https://discord.gg/mGkn66PHkx) for any `komokana`-related discussion, help,
-troubleshooting etc. If you have any specific feature requests or bugs to report, please create an issue in this repository.
+troubleshooting, etc. If you have any specific feature requests or bugs to report, please create an issue in this repository.
 
 Articles, blog posts, demos and videos about `komokana` can be added to this section of the readme by PR.
 
@@ -29,8 +29,9 @@ indefinitely. However, `komokana` will not launch successfully if either one of 
 
 ## Prerequisites
 
-- The latest version of `komorebi`
+- The latest version of `komorebi` from either scoop or WinGet
   - `scoop install komorebi` (from the `extras` bucket)
+  - `winget install LGUG2Z.komokana`
 - The latest version of `kanata`
   - `cargo install kanata`
 
